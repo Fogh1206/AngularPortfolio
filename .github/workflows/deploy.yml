@@ -3,7 +3,7 @@ name: Deploy Angular App to OCI
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   build:
