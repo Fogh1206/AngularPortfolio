@@ -24,12 +24,12 @@ jobs:
       - name: Install dependencies and build
         run: |
           npm install
-          npm run build --prod
+          npm run build --configuration "AngularPortfolio"
 
       # Step 4: Build Docker image
       - name: Build Docker image
         run: |
-          docker build -t my-angular-app:latest .
+          docker build -t angular_portfolio:latest .
 
       # Step 5: Push Docker image to OCI server
       - name: SSH and deploy to OCI
@@ -39,7 +39,7 @@ jobs:
           username: ${{ secrets.OCI_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "./docker-compose.yml, ./Dockerfile, ./dist"
-          target: "/home/ubuntu/"
+          target: "/home/opc/"
 
       - name: Restart Docker container
         uses: appleboy/ssh-action@v1.0.0
@@ -48,6 +48,6 @@ jobs:
           username: ${{ secrets.OCI_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker stop my-angular-app-container || true
-            docker rm my-angular-app-container || true
-            docker run -d -p 80:80 --name my-angular-app-container my-angular-app:latest
+            docker stop AngularPortfolio-container || true
+            docker rm AngularPortfolio-container || true
+            docker run -d -p 80:80 --name AngularPortfolio-container angular_portfolio:latest
