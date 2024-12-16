@@ -1,0 +1,53 @@
+name: Deploy Angular App to OCI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      # Step 3: Install dependencies and build the Angular app
+      - name: Install dependencies and build
+        run: |
+          npm install
+          npm run build --prod
+
+      # Step 4: Build Docker image
+      - name: Build Docker image
+        run: |
+          docker build -t my-angular-app:latest .
+
+      # Step 5: Push Docker image to OCI server
+      - name: SSH and deploy to OCI
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.OCI_HOST }}
+          username: ${{ secrets.OCI_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "./docker-compose.yml, ./Dockerfile, ./dist"
+          target: "/home/ubuntu/"
+
+      - name: Restart Docker container
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.OCI_HOST }}
+          username: ${{ secrets.OCI_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker stop my-angular-app-container || true
+            docker rm my-angular-app-container || true
+            docker run -d -p 80:80 --name my-angular-app-container my-angular-app:latest
